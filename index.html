@@ -12,11 +12,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Lucide İkonları (Modern ikonlar için) -->
-    <!-- Bu betikler, ikonları HTML içinde kullanmamızı sağlar -->
-    <!-- DÜZELTME: Script sırası değiştirildi. Lucide-React, React'e bağımlıdır. -->
-    <!-- Önce React ve ReactDOM, SONRA Lucide-React yüklenmeli -->
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react.dom.development.js"></script>
     <script src="https://unpkg.com/lucide-react@latest/dist/lucide-react.js"></script>
 
     <style>
@@ -258,6 +255,29 @@
                         <!-- Kullanıcıya atanan maçlar buraya JS ile eklenecek -->
                     </div>
                 </div>
+
+                <!-- YENİ BÖLÜM: Mazeret Ekleme Formu -->
+                <div class="mt-8 bg-white p-6 rounded-lg shadow-lg border border-gray-200">
+                    <h2 class="text-2xl font-semibold text-gray-900 mb-4">Mazeret Bildir</h2>
+                    <p class="text-sm text-gray-600 mb-4">Görev alamayacağınız bir tarih varsa, lütfen buradan bildirin. (Bu bir simülasyondur).</p>
+                    <form id="excuse-form" class="space-y-4">
+                        <div>
+                            <label for="excuse-date" class="block text-sm font-medium text-gray-700">Tarih</label>
+                            <input type="date" id="excuse-date" class="mt-1 block w-full sm:w-1/2 px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                        </div>
+                        <div>
+                            <label for="excuse-reason" class="block text-sm font-medium text-gray-700">Mazeret Açıklaması</label>
+                            <textarea id="excuse-reason" rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Örn: Sınav, Hastalık, vb." required></textarea>
+                        </div>
+                        <div>
+                            <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-md text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                Mazereti Gönder
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <!-- YENİ BÖLÜM SONU -->
+
             </div>
 
         </main>
@@ -494,6 +514,34 @@
                 renderDashboard(); // Paneli render et
                 window.location.hash = '#dashboard'; // Paneli göster
                 showMessage('Giriş başarılı! Hoş geldiniz.', 'success');
+                
+                // YENİ EK: Form dashboard'da render edildikten sonra
+                // event listener'ı buraya ekleyelim ki formun varlığından emin olalım.
+                // setTimeout ile küçük bir gecikme verelim ki DOM güncellensin.
+                setTimeout(() => {
+                    // Not: Bu listener'ı birden fazla kez eklememek için kontrol edebiliriz,
+                    // ama şimdilik bu basit demo için sorun değil.
+                    // Daha sağlam bir yapıda, listener bir kez eklenir.
+                    const excuseForm = document.getElementById('excuse-form');
+                    if (excuseForm) {
+                        // Eğer önceden listener eklendiyse, tekrar eklemesin diye
+                        // basit bir kontrol (gerçi çıkış yapınca sorun olmaz)
+                        // Biz şimdilik basit tutalım ve direkt ekleyelim.
+                        // En sağlam yol, addEventListener'ı setupEventListeners içinde yapıp
+                        // formu oradan yakalamak, ama bu da çalışır.
+                        
+                        // Önceki listener'ı kaldır (eğer varsa)
+                        // Bu en temiz yöntem değil ama iş görür
+                        // handleExcuseSubmit'i dışarıda tanımlamamız lazım
+                        // Düzeltme: En basit haliyle bırakalım.
+                        // Çıkış yapıldığında sayfa yenilenmediği için
+                        // tekrar giriş yapıldığında bu listener tekrar eklenebilir.
+                        // Bu yüzden event listener'ı renderDashboard içine taşıyalım.
+                    } else {
+                        console.error("Mazeret formu bulunamadı!");
+                    }
+                }, 100); // 100ms gecikme
+
             } else {
                 // Başarısız giriş
                 errorEl.classList.remove('hidden');
@@ -503,6 +551,15 @@
 
         // Çıkış İşlemi
         function handleLogout() {
+            // Mazeret formu listener'ını kaldır (eğer ekliyse)
+            // Bu, en iyi yöntem değil ama şimdilik demo için yeterli.
+            // Gerçek bir framework (React/Vue) bunu otomatik yönetirdi.
+            const excuseForm = document.getElementById('excuse-form');
+            if (excuseForm) {
+                // Listener'ı kaldırmanın en kolay yolu formu yeniden oluşturmaktır
+                // ama bu çok karmaşık. Şimdilik bu kısmı atlayalım.
+            }
+
             currentUser = null;
             updateNavUI(false);
             window.location.hash = '#home';
@@ -587,27 +644,35 @@
 
             if (assignments.length === 0) {
                 assignmentContainer.innerHTML = '<p class="text-gray-600">Bu hafta için size atanmış bir görev bulunmamaktadır.</p>';
-                return;
+            } else {
+                assignments.forEach(match => {
+                    const assignmentCard = `
+                        <div class="border border-gray-300 rounded-lg p-4 bg-gray-50">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm font-semibold text-indigo-700">${match.league}</span>
+                                <span class="text-sm font-medium text-gray-600">${match.date} - ${match.time}</span>
+                            </div>
+                            <h4 class="text-lg font-semibold text-gray-800">
+                                ${match.homeTeam} vs ${match.awayTeam}
+                            </h4>
+                            <p class="text-sm text-gray-600 mt-1">
+                                ${createIconElement('MapPin')}
+                                ${match.location}
+                            </p>
+                        </div>
+                    `;
+                    assignmentContainer.innerHTML += assignmentCard;
+                });
             }
 
-            assignments.forEach(match => {
-                const assignmentCard = `
-                    <div class="border border-gray-300 rounded-lg p-4 bg-gray-50">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="text-sm font-semibold text-indigo-700">${match.league}</span>
-                            <span class="text-sm font-medium text-gray-600">${match.date} - ${match.time}</span>
-                        </div>
-                        <h4 class="text-lg font-semibold text-gray-800">
-                            ${match.homeTeam} vs ${match.awayTeam}
-                        </h4>
-                        <p class="text-sm text-gray-600 mt-1">
-                            ${createIconElement('MapPin')}
-                            ${match.location}
-                        </p>
-                    </div>
-                `;
-                assignmentContainer.innerHTML += assignmentCard;
-            });
+            // YENİ GÜNCELLEME: Mazeret formu listener'ını burada,
+            // formun render edildiğinden emin olduktan sonra eklemek daha sağlam.
+            // Bu listener'ın SADECE BİR KEZ eklenmesi için bir kontrol ekleyelim.
+            const excuseForm = document.getElementById('excuse-form');
+            if (excuseForm && !excuseForm.dataset.listenerAttached) {
+                excuseForm.addEventListener('submit', handleExcuseSubmit);
+                excuseForm.dataset.listenerAttached = 'true'; // Bir işaretçi ekle
+            }
         }
 
         // Bildirim Mesajı Göster
@@ -629,6 +694,26 @@
             messageTimer = setTimeout(() => {
                 messageBox.classList.remove('show');
             }, 3000);
+        }
+
+        // YENİ FONKSİYON: Mazeret Formu Gönderme
+        function handleExcuseSubmit(e) {
+            e.preventDefault();
+            const date = document.getElementById('excuse-date').value;
+            const reason = document.getElementById('excuse-reason').value;
+
+            if (!date || !reason) {
+                showMessage('Lütfen tarih ve mazeret açıklamasını girin.', 'error');
+                return;
+            }
+
+            // SİMÜLASYON: Gerçekte burada veritabanına kayıt yapılır.
+            // Biz şimdilik sadece başarı mesajı gösteriyoruz.
+            console.log('Mazeret Gönderildi:', { date, reason });
+            showMessage('Mazeretiniz başarıyla iletildi.', 'success');
+
+            // Formu temizle
+            document.getElementById('excuse-form').reset();
         }
 
     </script>

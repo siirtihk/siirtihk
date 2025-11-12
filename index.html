@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Siirt Hakem & Gözlemci Sistemi</title>
+    
+    <!-- Tailwind CSS Yüklemesi -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Inter Font Ailesi -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide İkonları (Modern ikonlar için) -->
+    <!-- Bu betikler, ikonları HTML içinde kullanmamızı sağlar -->
+    <!-- DÜZELTME: Script sırası değiştirildi. Lucide-React, React'e bağımlıdır. -->
+    <!-- Önce React ve ReactDOM, SONRA Lucide-React yüklenmeli -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/lucide-react@latest/dist/lucide-react.js"></script>
+
+    <style>
+        /* Temel fontu ayarla */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Arka planı hafif gri yap */
+        }
+        
+        /* Sayfalar arasında geçiş için */
+        .page {
+            display: none; /* Tüm sayfaları varsayılan olarak gizle */
+        }
+        
+        /* Aktif navigasyon linki */
+        .nav-link.active {
+            color: #4f46e5; /* indigo-600 */
+            font-weight: 600;
+            border-bottom: 2px solid #4f46e5;
+        }
+
+        /* İkonlar için basit stil */
+        .icon-wrapper {
+            width: 24px;
+            height: 24px;
+            display: inline-block;
+        }
+
+        /* Yükleme ve hata mesajları için */
+        #message-box {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 16px;
+            border-radius: 8px;
+            font-weight: 500;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            opacity: 0;
+        }
+        #message-box.show {
+            display: block;
+            opacity: 1;
+        }
+        #message-box.success {
+            background-color: #d1fae5; /* green-100 */
+            color: #065f46; /* green-800 */
+        }
+        #message-box.error {
+            background-color: #fee2e2; /* red-100 */
+            color: #991b1b; /* red-800 */
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Ana Konteyner -->
+    <div class="min-h-screen">
+        
+        <!-- Header / Navigasyon -->
+        <header class="bg-white shadow-md sticky top-0 z-50">
+            <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <!-- Logo / Başlık -->
+                    <div class="flex-shrink-0 flex items-center">
+                        <span class="icon-wrapper text-indigo-600" id="logo-icon"></span>
+                        <span class="ml-2 text-xl font-bold text-gray-900">Siirt HGS</span>
+                    </div>
+                    
+                    <!-- Mobil Menü Butonu -->
+                    <div class="sm:hidden">
+                        <button id="mobile-menu-button" class="text-gray-500 hover:text-gray-800 p-2 rounded-md">
+                            <span class="icon-wrapper" id="menu-icon"></span>
+                        </button>
+                    </div>
+
+                    <!-- Masaüstü Menü -->
+                    <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+                        <a href="#home" class="nav-link inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">Ana Sayfa</a>
+                        <a href="#schedule" class="nav-link inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">Maç Programı</a>
+                        <a href="#login" id="nav-login" class="nav-link inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">Giriş Yap</a>
+                        <a href="#dashboard" id="nav-dashboard" class="nav-link hidden inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">Panelim</a>
+                        <button id="nav-logout" class="hidden inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">Çıkış Yap</button>
+                    </div>
+                </div>
+
+                <!-- Mobil Menü (Gizli) -->
+                <div id="mobile-menu" class="hidden sm:hidden py-2 space-y-1">
+                    <a href="#home" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">Ana Sayfa</a>
+                    <a href="#schedule" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">Maç Programı</a>
+                    <a href="#login" id="mobile-nav-login" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">Giriş Yap</a>
+                    <a href="#dashboard" id="mobile-nav-dashboard" class="nav-link hidden block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">Panelim</a>
+                    <button id="mobile-nav-logout" class="hidden w-full text-left block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">Çıkış Yap</button>
+                </div>
+            </nav>
+        </header>
+
+        <!-- Ana İçerik Alanı -->
+        <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+            <!-- =================================== -->
+            <!-- ANA SAYFA (HOME)                    -->
+            <!-- =================================== -->
+            <div id="home-page" class="page">
+                <div class="bg-white shadow-xl rounded-lg overflow-hidden">
+                    <div class="px-6 py-12 md:px-12 md:py-16 text-center">
+                        <h1 class="text-3xl md:text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight">
+                            Siirt Hakem ve Gözlemci
+                            <span class="block text-indigo-600">Maç Yönetim Sistemine Hoş Geldiniz!</span>
+                        </h1>
+                        <p class="mt-4 max-w-2xl mx-auto text-lg md:text-xl text-gray-600">
+                            İlimizdeki amatör maç atamalarını yönetmek için geliştirilen 
+                            <strong class="font-semibold">tamamen ücretsiz</strong> ve topluluk odaklı bir platform.
+                        </p>
+                        <div class="mt-8 flex justify-center gap-4 flex-wrap">
+                            <a href="#schedule" class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 shadow-md">
+                                Maç Programını Gör
+                            </a>
+                            <a href="#login" class="inline-flex items-center justify-center px-6 py-3 border border-indigo-600 text-base font-medium rounded-lg text-indigo-600 bg-white hover:bg-indigo-50 shadow-md">
+                                Sisteme Giriş Yap
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Özellikler Bölümü -->
+                <div class="mt-12 grid gap-8 md:grid-cols-3">
+                    <div class="bg-white p-6 rounded-lg shadow-lg">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 bg-indigo-100 p-3 rounded-full">
+                                <span class="icon-wrapper text-indigo-600" id="feature-icon-1"></span>
+                            </div>
+                            <h3 class="ml-4 text-xl font-semibold text-gray-900">Kolay Atama Yönetimi</h3>
+                        </div>
+                        <p class="mt-4 text-gray-600">
+                            Yöneticiler için maçlara hakem ve gözlemci ataması yapmak hiç bu kadar kolay olmamıştı. (Simülasyon)
+                        </p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-lg">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 bg-indigo-100 p-3 rounded-full">
+                                <span class="icon-wrapper text-indigo-600" id="feature-icon-2"></span>
+                            </div>
+                            <h3 class="ml-4 text-xl font-semibold text-gray-900">Anlık Bildirimler</h3>
+                        </div>
+                        <p class="mt-4 text-gray-600">
+                            Atandığınız maçlardan anında haberdar olun. Görevlerinizi kolayca takip edin. (Simülasyon)
+                        </p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-lg">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 bg-indigo-100 p-3 rounded-full">
+                                <span class="icon-wrapper text-indigo-600" id="feature-icon-3"></span>
+                            </div>
+                            <h3 class="ml-4 text-xl font-semibold text-gray-900">Tamamen Ücretsiz</h3>
+                        </div>
+                        <p class="mt-4 text-gray-600">
+                            Bu sistem, Siirt futbol topluluğuna hizmet etmek için geliştirilmiştir ve her zaman ücretsiz kalacaktır.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- =================================== -->
+            <!-- MAÇ PROGRAMI (SCHEDULE)             -->
+            <!-- =================================== -->
+            <div id="schedule-page" class="page">
+                <h2 class="text-3xl font-bold text-gray-900 mb-6">Haftalık Maç Programı</h2>
+                
+                <!-- Filtreleme (Basit) -->
+                <div class="mb-6 bg-white p-4 rounded-lg shadow-md">
+                    <label for="league-filter" class="block text-sm font-medium text-gray-700">Lige Göre Filtrele:</label>
+                    <select id="league-filter" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                        <option value="all">Tüm Ligler</option>
+                        <option value="Süper Amatör Lig">Süper Amatör Lig</option>
+                        <option value="1. Amatör Lig">1. Amatör Lig</option>
+                        <option value="U19 Ligi">U19 Ligi</option>
+                    </select>
+                </div>
+
+                <!-- Maç Listesi -->
+                <div class="space-y-6" id="match-list-container">
+                    <!-- Maç kartları buraya JS ile eklenecek -->
+                </div>
+            </div>
+
+            <!-- =================================== -->
+            <!-- GİRİŞ SAYFASI (LOGIN)               -->
+            <!-- =================================== -->
+            <div id="login-page" class="page">
+                <div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-xl border border-gray-200">
+                    <div class="text-center mb-6">
+                        <span class="icon-wrapper text-indigo-600 mx-auto w-12 h-12" id="login-icon"></span>
+                        <h2 class="mt-4 text-3xl font-bold text-gray-900">Sistem Girişi</h2>
+                        <p class="mt-2 text-sm text-gray-600">
+                            Atamalarınızı görmek için giriş yapın.
+                        </p>
+                    </div>
+                    
+                    <form id="login-form" class="space-y-6">
+                        <div>
+                            <label for="username" class="block text-sm font-medium text-gray-700">Kullanıcı Adı (T.C. Kimlik / Lisans No)</label>
+                            <input type="text" id="username" class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Örn: hakem" required>
+                        </div>
+                        <div>
+                            <label for="password" class="block text-sm font-medium text-gray-700">Şifre</label>
+                            <input type="password" id="password" class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Örn: 123" required>
+                        </div>
+                        
+                        <!-- Hata Mesajı Alanı -->
+                        <div id="login-error" class="text-red-600 text-sm font-medium hidden">
+                            Kullanıcı adı veya şifre hatalı.
+                        </div>
+
+                        <div>
+                            <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-md text-lg font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
+                                Giriş Yap
+                            </button>
+                        </div>
+                    </form>
+                    <p class="mt-6 text-center text-xs text-gray-500">
+                        Demo için Kullanıcı: <strong>hakem</strong> Şifre: <strong>123</strong><br>
+                        Demo için Kullanıcı: <strong>gozlemci</strong> Şifre: <strong>123</strong>
+                    </p>
+                </div>
+            </div>
+
+            <!-- =================================== -->
+            <!-- KULLANICI PANELİ (DASHBOARD)        -->
+            <!-- =================================== -->
+            <div id="dashboard-page" class="page">
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">Hoş Geldiniz, <span id="user-fullname" class="text-indigo-600"></span>!</h1>
+                <p class="text-lg text-gray-600 mb-6">Rolünüz: <span id="user-role" class="font-semibold bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded-full"></span></p>
+
+                <div class="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
+                    <h2 class="text-2xl font-semibold text-gray-900 mb-4">Bu Hafta Size Atanan Görevler</h2>
+                    <div class="space-y-4" id="user-assignments-container">
+                        <!-- Kullanıcıya atanan maçlar buraya JS ile eklenecek -->
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Mesaj Kutusu (Bildirimler için) -->
+    <div id="message-box">
+        <span id="message-text"></span>
+    </div>
+
+    <!-- UYGULAMA JAVASCRIPT KODLARI -->
+    <script>
+        // React ve Lucide ikonlarını yüklemek için
+        const e = React.createElement;
+        const iconContainerIds = [
+            'logo-icon', 'menu-icon', 'feature-icon-1', 'feature-icon-2', 'feature-icon-3', 'login-icon'
+        ];
+        const iconNames = {
+            'logo-icon': 'Whistle',
+            'menu-icon': 'Menu',
+            'feature-icon-1': 'ClipboardList',
+            'feature-icon-2': 'Bell',
+            'feature-icon-3': 'BadgePercent',
+            'login-icon': 'User',
+            'match-icon': 'CalendarDays',
+            'ref-icon': 'User',
+            'obs-icon': 'Search',
+            'loc-icon': 'MapPin'
+        };
+
+        // Simülasyon Veritabanı
+        const MOCK_USERS = {
+            "hakem": {
+                username: "hakem",
+                password: "123",
+                fullName: "Ahmet Yılmaz",
+                role: "Hakem"
+            },
+            "gozlemci": {
+                username: "gozlemci",
+                password: "123",
+                fullName: "Zeynep Kaya",
+                role: "Gözlemci"
+            }
+        };
+
+        const MOCK_MATCHES = [
+            {
+                id: 1,
+                league: "Süper Amatör Lig",
+                date: "15 Kasım 2025, Cumartesi",
+                time: "14:00",
+                location: "Siirt Atatürk Stadyumu",
+                homeTeam: "Siirtspor",
+                awayTeam: "Kurtalan Spor",
+                referee: "Ahmet Yılmaz",
+                observer: "Zeynep Kaya"
+            },
+            {
+                id: 2,
+                league: "1. Amatör Lig",
+                date: "15 Kasım 2025, Cumartesi",
+                time: "16:00",
+                location: "Şirvan İlçe Stadyumu",
+                homeTeam: "Şirvanspor",
+                awayTeam: "Pervari Gücü",
+                referee: "Mehmet Demir",
+                observer: "Ayşe Tekin"
+            },
+            {
+                id: 3,
+                league: "U19 Ligi",
+                date: "16 Kasım 2025, Pazar",
+                time: "11:00",
+                location: "Eruh İlçe Stadyumu",
+                homeTeam: "Eruh Gençlik",
+                awayTeam: "Baykan Spor",
+                referee: "Ali Can",
+                observer: "Zeynep Kaya"
+            },
+            {
+                id: 4,
+                league: "Süper Amatör Lig",
+                date: "16 Kasım 2025, Pazar",
+                time: "14:00",
+                location: "Siirt Atatürk Stadyumu",
+                homeTeam: "Tilospor",
+                awayTeam: "Kayabağlar Gençlik",
+                referee: "Ahmet Yılmaz",
+                observer: "Hasan Çelik"
+            }
+        ];
+
+        let currentUser = null; // Giriş yapan kullanıcıyı burada saklayacağız
+
+        // --- UYGULAMA BAŞLANGIÇ FONKSİYONU ---
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // 1. İkonları Yükle
+            renderAllIcons();
+
+            // 2. Navigasyon (Routing) Fonksiyonunu Ayarla
+            window.addEventListener('hashchange', navigate);
+            navigate(); // Sayfa ilk yüklendiğinde doğru sayfayı göster
+
+            // 3. Form ve Buton Olay İzleyicilerini Ayarla
+            setupEventListeners();
+
+            // 4. Maçları Yükle
+            renderMatches('all');
+        });
+
+        // --- YARDIMCI FONKSİYONLAR ---
+
+        // Tüm ikonları render et
+        function renderAllIcons() {
+            try {
+                iconContainerIds.forEach(id => {
+                    const container = document.getElementById(id);
+                    if (container) {
+                        const iconName = iconNames[id];
+                        // DÜZELTME: lucide nesnesinin varlığını kontrol et
+                        if (typeof lucide !== 'undefined' && lucide[iconName]) {
+                            const root = ReactDOM.createRoot(container);
+                            root.render(e(lucide[iconName]));
+                        } else if (typeof lucide === 'undefined') {
+                            console.error(`Hata: 'lucide' global nesnesi bulunamadı. Script yüklenmiş mi?`);
+                        } else {
+                            console.warn(`Uyarı: '${iconName}' (ID: ${id}) ikonu 'lucide' kütüphanesinde bulunamadı.`);
+                        }
+                    }
+                });
+            } catch (err) {
+                console.error("İkonlar yüklenirken hata oluştu:", err);
+            }
+        }
+
+        // İkon oluşturmak için kullanılan fonksiyon
+        function createIconElement(iconName) {
+            // DÜZELTME: lucide nesnesinin varlığını kontrol et
+            if (typeof lucide === 'undefined' || !lucide[iconName]) {
+                console.warn(`createIconElement: '${iconName}' ikonu bulunamadı.`);
+                return ''; // Ikon bulunamazsa boş string döndür
+            }
+            const iconId = `icon-${iconName}-${Math.random().toString(36).substr(2, 9)}`;
+            setTimeout(() => {
+                const container = document.getElementById(iconId);
+                if (container) {
+                    // DÜZELTME: ReactDOM'un da varlığını kontrol et
+                    if (typeof ReactDOM !== 'undefined') {
+                        const root = ReactDOM.createRoot(container);
+                        root.render(e(lucide[iconName], { size: 16, className: 'inline-block mr-2' }));
+                    } else {
+                        console.error("createIconElement: ReactDOM bulunamadı.");
+                    }
+                }
+            }, 0);
+            return `<span id="${iconId}" class="icon-wrapper w-4 h-4 inline-block mr-2"></span>`;
+        }
+
+
+        // Sayfa Navigasyonu (Routing)
+        function navigate() {
+            const hash = window.location.hash || '#home';
+            const pageId = hash.substring(1) + '-page';
+
+            // Tüm sayfaları gizle
+            document.querySelectorAll('.page').forEach(page => {
+                page.style.display = 'none';
+            });
+
+            // Aktif sayfayı göster
+            const activePage = document.getElementById(pageId);
+            if (activePage) {
+                activePage.style.display = 'block';
+            } else {
+                document.getElementById('home-page').style.display = 'block'; // Bulunamazsa ana sayfayı göster
+            }
+
+            // Navigasyon linklerini güncelle
+            document.querySelectorAll('.nav-link').forEach(link => {
+                if (link.getAttribute('href') === hash) {
+                    link.classList.add('active');
+                } else {
+                    link.classList.remove('active');
+                }
+            });
+
+            // Mobil menüyü kapat
+            document.getElementById('mobile-menu').classList.add('hidden');
+        }
+
+        // Olay İzleyicileri Ayarla
+        function setupEventListeners() {
+            // Mobil Menü
+            document.getElementById('mobile-menu-button').addEventListener('click', () => {
+                document.getElementById('mobile-menu').classList.toggle('hidden');
+            });
+
+            // Giriş Formu
+            document.getElementById('login-form').addEventListener('submit', handleLogin);
+
+            // Çıkış Butonları
+            document.getElementById('nav-logout').addEventListener('click', handleLogout);
+            document.getElementById('mobile-nav-logout').addEventListener('click', handleLogout);
+
+            // Maç Filtreleme
+            document.getElementById('league-filter').addEventListener('change', (e) => {
+                renderMatches(e.target.value);
+            });
+
+            // Mobil menü linklerine tıklayınca menüyü kapat
+            document.querySelectorAll('#mobile-menu .nav-link').forEach(link => {
+                link.addEventListener('click', () => {
+                    document.getElementById('mobile-menu').classList.add('hidden');
+                });
+            });
+        }
+
+        // Giriş İşlemi
+        function handleLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorEl = document.getElementById('login-error');
+
+            const user = MOCK_USERS[username];
+
+            if (user && user.password === password) {
+                // Başarılı giriş
+                currentUser = user;
+                errorEl.classList.add('hidden');
+                updateNavUI(true); // Navigasyonu güncelle
+                renderDashboard(); // Paneli render et
+                window.location.hash = '#dashboard'; // Paneli göster
+                showMessage('Giriş başarılı! Hoş geldiniz.', 'success');
+            } else {
+                // Başarısız giriş
+                errorEl.classList.remove('hidden');
+                showMessage('Kullanıcı adı veya şifre hatalı.', 'error');
+            }
+        }
+
+        // Çıkış İşlemi
+        function handleLogout() {
+            currentUser = null;
+            updateNavUI(false);
+            window.location.hash = '#home';
+            showMessage('Başarıyla çıkış yaptınız.', 'success');
+        }
+
+        // Navigasyon çubuğunu giriş durumuna göre güncelle
+        function updateNavUI(isLoggedIn) {
+            // Masaüstü
+            document.getElementById('nav-login').style.display = isLoggedIn ? 'none' : 'inline-flex';
+            document.getElementById('nav-dashboard').style.display = isLoggedIn ? 'inline-flex' : 'none';
+            document.getElementById('nav-logout').style.display = isLoggedIn ? 'inline-flex' : 'none';
+
+            // Mobil
+            document.getElementById('mobile-nav-login').style.display = isLoggedIn ? 'none' : 'block';
+            document.getElementById('mobile-nav-dashboard').style.display = isLoggedIn ? 'block' : 'none';
+            document.getElementById('mobile-nav-logout').style.display = isLoggedIn ? 'block' : 'none';
+        }
+
+        // Maç Programı Sayfasını Render Et
+        function renderMatches(leagueFilter) {
+            const container = document.getElementById('match-list-container');
+            container.innerHTML = ''; // Konteyneri temizle
+
+            const filteredMatches = MOCK_MATCHES.filter(match => 
+                leagueFilter === 'all' || match.league === leagueFilter
+            );
+
+            if (filteredMatches.length === 0) {
+                container.innerHTML = '<p class="text-gray-600 text-center">Bu filtreye uygun maç bulunamadı.</p>';
+                return;
+            }
+
+            filteredMatches.forEach(match => {
+                const matchCard = `
+                    <div class="bg-white shadow-lg rounded-lg overflow-hidden border border-gray-200">
+                        <div class="px-6 py-5">
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="text-sm font-semibold bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full">${match.league}</span>
+                                <span class="text-sm font-medium text-gray-600">${match.date} - ${match.time}</span>
+                            </div>
+                            
+                            <h3 class="text-xl font-bold text-gray-900 text-center mb-4">
+                                ${match.homeTeam} <span class="text-indigo-600">vs</span> ${match.awayTeam}
+                            </h3>
+                            
+                            <div class="border-t border-gray-200 pt-4 text-sm text-gray-700 space-y-2">
+                                <p class="flex items-center">
+                                    ${createIconElement('MapPin')}
+                                    <strong>Saha:</strong>&nbsp; ${match.location}
+                                </p>
+                                <p class="flex items-center">
+                                    ${createIconElement('User')}
+                                    <strong>Hakem:</strong>&nbsp; ${match.referee}
+                                </p>
+                                <p class="flex items-center">
+                                    ${createIconElement('Search')}
+                                    <strong>Gözlemci:</strong>&nbsp; ${match.observer}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += matchCard;
+            });
+        }
+
+        // Kullanıcı Panelini Render Et
+        function renderDashboard() {
+            if (!currentUser) return;
+
+            document.getElementById('user-fullname').textContent = currentUser.fullName;
+            document.getElementById('user-role').textContent = currentUser.role;
+
+            const assignmentContainer = document.getElementById('user-assignments-container');
+            assignmentContainer.innerHTML = ''; // Konteyneri temizle
+
+            const assignments = MOCK_MATCHES.filter(match =>
+                (currentUser.role === 'Hakem' && match.referee === currentUser.fullName) ||
+                (currentUser.role === 'Gözlemci' && match.observer === currentUser.fullName)
+            );
+
+            if (assignments.length === 0) {
+                assignmentContainer.innerHTML = '<p class="text-gray-600">Bu hafta için size atanmış bir görev bulunmamaktadır.</p>';
+                return;
+            }
+
+            assignments.forEach(match => {
+                const assignmentCard = `
+                    <div class="border border-gray-300 rounded-lg p-4 bg-gray-50">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm font-semibold text-indigo-700">${match.league}</span>
+                            <span class="text-sm font-medium text-gray-600">${match.date} - ${match.time}</span>
+                        </div>
+                        <h4 class="text-lg font-semibold text-gray-800">
+                            ${match.homeTeam} vs ${match.awayTeam}
+                        </h4>
+                        <p class="text-sm text-gray-600 mt-1">
+                            ${createIconElement('MapPin')}
+                            ${match.location}
+                        </p>
+                    </div>
+                `;
+                assignmentContainer.innerHTML += assignmentCard;
+            });
+        }
+
+        // Bildirim Mesajı Göster
+        let messageTimer;
+        function showMessage(text, type = 'success') {
+            const messageBox = document.getElementById('message-box');
+            const messageText = document.getElementById('message-text');
+
+            // Önceki zamanlayıcıyı temizle
+            if (messageTimer) {
+                clearTimeout(messageTimer);
+            }
+
+            messageText.textContent = text;
+            messageBox.className = ''; // Sınıfları sıfırla
+            messageBox.classList.add(type, 'show');
+
+            // Mesajı 3 saniye sonra gizle
+            messageTimer = setTimeout(() => {
+                messageBox.classList.remove('show');
+            }, 3000);
+        }
+
+    </script>
+</body>
+</html>
